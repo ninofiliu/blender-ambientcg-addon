@@ -1,7 +1,7 @@
 bl_info = {
     "name": "AmbientCG Materials",
     "author": "Nino Filiu",
-    "version": (1, 0),
+    "version": (1, 0, 0),
     "blender": (4, 1, 1),
     "location": "Shader Editor > Sidebar > AmbientCG",
     "description": "One-click material creation from AmbientCG",
