@@ -2,6 +2,8 @@
 
 One-click material creation from AmbientCG
 
+https://github.com/ninofiliu/blender-ambientcg-addon/assets/29477588/1673047d-e7a3-4bbc-96dc-913383b47e8e
+
 ## Installation
 
 Download ZIP
