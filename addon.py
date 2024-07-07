@@ -1,0 +1,178 @@
+bl_info = {
+    "name": "AmbientCG Materials",
+    "author": "Nino Filiu",
+    "version": (1, 0),
+    "blender": (4, 1, 1),
+    "location": "Shader Editor > Sidebar > AmbientCG",
+    "description": "One-click material creation from AmbientCG",
+    "category": "Material",
+}
+
+import bpy
+import os
+import urllib.request
+import zipfile
+from bpy.props import StringProperty, EnumProperty
+from pathlib import Path
+
+
+def get_cache_dir():
+    home = Path.home()
+    cache_dir = home / ".cache" / "ambientcg"
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    return cache_dir
+
+
+class MATERIAL_OT_fetch_and_create(bpy.types.Operator):
+    bl_idname = "material.fetch_and_create"
+    bl_label = "Fetch and Create Material"
+    bl_options = {"REGISTER", "UNDO"}
+
+    def execute(self, context):
+        material_name = context.scene.ambientcg_material_name
+        resolution = context.scene.ambientcg_resolution
+
+        url = f"https://ambientcg.com/get?file={material_name}_{resolution}-PNG.zip"
+
+        cache_dir = get_cache_dir()
+        extract_path = cache_dir / f"{material_name}_{resolution}"
+
+        if not extract_path.exists():
+            # Download and extract the zip file
+            zip_path = cache_dir / f"{material_name}_{resolution}.zip"
+
+            # Create a custom opener with a User-Agent
+            opener = urllib.request.build_opener()
+            opener.addheaders = [
+                (
+                    "User-Agent",
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+                )
+            ]
+            urllib.request.install_opener(opener)
+
+            # Download the file
+            try:
+                urllib.request.urlretrieve(url, zip_path)
+            except Exception as e:
+                self.report({"ERROR"}, f"Failed to download file: {str(e)}")
+                return {"CANCELLED"}
+
+            # Extract the zip file
+            try:
+                with zipfile.ZipFile(zip_path, "r") as zip_ref:
+                    zip_ref.extractall(extract_path)
+                zip_path.unlink()  # Remove the zip file after extraction
+            except Exception as e:
+                self.report({"ERROR"}, f"Failed to extract zip file: {str(e)}")
+                return {"CANCELLED"}
+        else:
+            self.report(
+                {"INFO"}, f"Using cached material: {material_name}_{resolution}"
+            )
+
+        # Create a new material
+        material = bpy.data.materials.new(name=material_name)
+        material.use_nodes = True
+        nodes = material.node_tree.nodes
+        links = material.node_tree.links
+
+        # Clear default nodes
+        nodes.clear()
+
+        # Create shader nodes
+        principled = nodes.new(type="ShaderNodeBsdfPrincipled")
+        principled.location = (0, 0)
+
+        normal_map = nodes.new(type="ShaderNodeNormalMap")
+        normal_map.location = (-300, -300)
+
+        # Find and load texture files
+        for file in os.listdir(extract_path):
+            if file.endswith("_Color.png"):
+                color_tex = nodes.new(type="ShaderNodeTexImage")
+                color_tex.location = (-600, 300)
+                color_tex.image = bpy.data.images.load(str(extract_path / file))
+                color_tex.image.colorspace_settings.name = "sRGB"
+                links.new(color_tex.outputs["Color"], principled.inputs["Base Color"])
+            elif file.endswith("_Roughness.png"):
+                roughness_tex = nodes.new(type="ShaderNodeTexImage")
+                roughness_tex.location = (-600, 0)
+                roughness_tex.image = bpy.data.images.load(str(extract_path / file))
+                roughness_tex.image.colorspace_settings.name = "Non-Color"
+                links.new(
+                    roughness_tex.outputs["Color"], principled.inputs["Roughness"]
+                )
+            elif file.endswith("_NormalGL.png"):
+                normal_tex = nodes.new(type="ShaderNodeTexImage")
+                normal_tex.location = (-600, -300)
+                normal_tex.image = bpy.data.images.load(str(extract_path / file))
+                normal_tex.image.colorspace_settings.name = "Non-Color"
+                links.new(normal_tex.outputs["Color"], normal_map.inputs["Color"])
+
+        # Create links
+        links.new(normal_map.outputs["Normal"], principled.inputs["Normal"])
+
+        # Add material output node
+        material_output = nodes.new(type="ShaderNodeOutputMaterial")
+        material_output.location = (300, 0)
+        links.new(principled.outputs["BSDF"], material_output.inputs["Surface"])
+
+        self.report(
+            {"INFO"}, f"Material '{material_name}' has been created successfully."
+        )
+        return {"FINISHED"}
+
+
+class MATERIAL_PT_ambientcg_fetcher(bpy.types.Panel):
+    bl_label = "AmbientCG Fetcher"
+    bl_idname = "MATERIAL_PT_ambientcg_fetcher"
+    bl_space_type = "NODE_EDITOR"
+    bl_region_type = "UI"
+    bl_category = "AmbientCG Fetcher"
+
+    def draw(self, context):
+        layout = self.layout
+        scene = context.scene
+
+        layout.prop(scene, "ambientcg_material_name", text="Material Name")
+        layout.prop(scene, "ambientcg_resolution", text="Resolution")
+        layout.operator("material.fetch_and_create")
+
+
+classes = (
+    MATERIAL_OT_fetch_and_create,
+    MATERIAL_PT_ambientcg_fetcher,
+)
+
+
+def register():
+    for cls in classes:
+        bpy.utils.register_class(cls)
+    bpy.types.Scene.ambientcg_material_name = StringProperty(
+        name="Material Name",
+        description="Name of the AmbientCG material (e.g., Rock035)",
+        default="Rock035",
+    )
+    bpy.types.Scene.ambientcg_resolution = EnumProperty(
+        name="Resolution",
+        description="Resolution of the material textures",
+        items=[
+            ("1K", "1K", "1K resolution"),
+            ("2K", "2K", "2K resolution"),
+            ("4K", "4K", "4K resolution"),
+            ("8K", "8K", "8K resolution"),
+        ],
+        default="1K",
+    )
+
+
+def unregister():
+    for cls in reversed(classes):
+        bpy.utils.unregister_class(cls)
+    del bpy.types.Scene.ambientcg_material_name
+    del bpy.types.Scene.ambientcg_resolution
+
+
+if __name__ == "__main__":
+    register()
