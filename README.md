@@ -30,7 +30,7 @@ Fill in the material name and the resolution. By default, it fills in [Rock035](
 
 ![image](https://github.com/ninofiliu/blender-ambientcg-addon/assets/29477588/413cced7-ee3a-4d19-a6b9-c91c9aa5d3a5)
 
-Click on `Fetch and Create Material`. Wait for the material to be fetched - depending on the resolution and your connection, it should take anywhere from 5s to 1mn. You'll then be able to select the material from the dropdown. It set up the color texture, the roughness, and the metalness.
+Click on `Fetch and Create Material`. Wait for the material to be fetched - depending on the resolution and your connection, it should take anywhere from 5s to 1mn. You'll then be able to select the material from the dropdown. It set up the color texture, the roughness, and the normal map.
 
 ![image](https://github.com/ninofiliu/blender-ambientcg-addon/assets/29477588/84271a37-c989-4767-981b-21224199d7bc)
 
