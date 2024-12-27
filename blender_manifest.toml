@@ -6,9 +6,9 @@ tagline = "One-click material creation from AmbientCG"
 maintainer = "Nino Filiu <filiunino@gmail.com>"
 type = "add-on"
 website = "https://github.com/ninofiliu/blender-ambientcg-addon"
-tags = ["Materials"]
+tags = ["Import-Export", "Material"]
 blender_version_min = "4.2.0"
-license = ["SPDX:AML"]
+license = ["SPDX:GPL-3.0-or-later"]
 
 [permissions]
 network = "Makes calls to AmbientCG"
