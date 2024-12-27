@@ -1,0 +1,15 @@
+schema_version = "1.0.0"
+id = "ambientcg_material_importer"
+version = "1.0.0"
+name = "AmbientCG Material Importer"
+tagline = "One-click material creation from AmbientCG"
+maintainer = "Nino Filiu <filiunino@gmail.com>"
+type = "add-on"
+website = "https://github.com/ninofiliu/blender-ambientcg-addon"
+tags = ["Materials"]
+blender_version_min = "4.2.0"
+license = ["SPDX:AML"]
+
+[permissions]
+network = "Makes calls to AmbientCG"
+files = "Import and cache textures to disk"
