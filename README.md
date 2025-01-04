@@ -6,6 +6,12 @@ https://github.com/ninofiliu/blender-ambientcg-addon/assets/29477588/1673047d-e7
 
 ## Installation
 
+### Recommended way - install as an extension
+
+https://extensions.blender.org/add-ons/ambientcg-material-importer/
+
+### Legacy way - install as an addon
+
 Download ZIP
 
 ![image](https://github.com/ninofiliu/blender-ambientcg-addon/assets/29477588/a5927fb2-f985-48a9-a3d6-133e0f946224)
