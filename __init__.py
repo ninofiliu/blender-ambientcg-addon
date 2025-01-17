@@ -1,7 +1,7 @@
 bl_info = {
     "name": "AmbientCG Material Importer",
     "author": "Nino Filiu",
-    "version": (1, 0, 0),
+    "version": (1, 1, 0),
     "blender": (4, 2, 0),
     "location": "Shader Editor > Sidebar > AmbientCG",
     "description": "One-click material creation from AmbientCG",
@@ -81,11 +81,12 @@ class MATERIAL_OT_fetch_and_create(bpy.types.Operator):
         nodes.clear()
 
         # Create shader nodes
+        material_output = nodes.new(type="ShaderNodeOutputMaterial")
+        material_output.location = (300, 0)
+
         principled = nodes.new(type="ShaderNodeBsdfPrincipled")
         principled.location = (0, 0)
-
-        normal_map = nodes.new(type="ShaderNodeNormalMap")
-        normal_map.location = (-300, -300)
+        links.new(principled.outputs["BSDF"], material_output.inputs["Surface"])
 
         # Find and load texture files
         for file in os.listdir(extract_path):
@@ -108,15 +109,24 @@ class MATERIAL_OT_fetch_and_create(bpy.types.Operator):
                 normal_tex.location = (-600, -300)
                 normal_tex.image = bpy.data.images.load(str(extract_path / file))
                 normal_tex.image.colorspace_settings.name = "Non-Color"
+                normal_map = nodes.new(type="ShaderNodeNormalMap")
+                normal_map.location = (-300, -300)
                 links.new(normal_tex.outputs["Color"], normal_map.inputs["Color"])
-
-        # Create links
-        links.new(normal_map.outputs["Normal"], principled.inputs["Normal"])
-
-        # Add material output node
-        material_output = nodes.new(type="ShaderNodeOutputMaterial")
-        material_output.location = (300, 0)
-        links.new(principled.outputs["BSDF"], material_output.inputs["Surface"])
+                links.new(normal_map.outputs["Normal"], principled.inputs["Normal"])
+            elif file.endswith("_Displacement.png"):
+                displacement_tex = nodes.new(type="ShaderNodeTexImage")
+                displacement_tex.location = (-600, -600)
+                displacement_tex.image = bpy.data.images.load(str(extract_path / file))
+                displacement_tex.image.colorspace_settings.name = "Non-Color"
+                displacement = nodes.new(type="ShaderNodeDisplacement")
+                displacement.location = (-300, -600)
+                links.new(
+                    displacement_tex.outputs["Color"], displacement.inputs["Height"]
+                )
+                links.new(
+                    displacement.outputs["Displacement"],
+                    material_output.inputs["Displacement"],
+                )
 
         self.report(
             {"INFO"}, f"Material '{material_name}' has been created successfully."
