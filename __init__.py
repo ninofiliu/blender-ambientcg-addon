@@ -1,7 +1,7 @@
 bl_info = {
     "name": "AmbientCG Material Importer",
     "author": "Nino Filiu",
-    "version": (1, 1, 0),
+    "version": (1, 1, 1),
     "blender": (4, 2, 0),
     "location": "Shader Editor > Sidebar > AmbientCG",
     "description": "One-click material creation from AmbientCG",
@@ -92,10 +92,18 @@ class MATERIAL_OT_fetch_and_create(bpy.types.Operator):
         for file in os.listdir(extract_path):
             if file.endswith("_Color.png"):
                 color_tex = nodes.new(type="ShaderNodeTexImage")
-                color_tex.location = (-600, 300)
+                color_tex.location = (-600, 600)
                 color_tex.image = bpy.data.images.load(str(extract_path / file))
                 color_tex.image.colorspace_settings.name = "sRGB"
                 links.new(color_tex.outputs["Color"], principled.inputs["Base Color"])
+            elif file.endswith("_Metalness.png"):
+                metalness_tex = nodes.new(type="ShaderNodeTexImage")
+                metalness_tex.location = (-600, 300)
+                metalness_tex.image = bpy.data.images.load(str(extract_path / file))
+                metalness_tex.image.colorspace_settings.name = "Non-Color"
+                links.new(
+                    metalness_tex.outputs["Color"], principled.inputs["Metallic"]
+                )
             elif file.endswith("_Roughness.png"):
                 roughness_tex = nodes.new(type="ShaderNodeTexImage")
                 roughness_tex.location = (-600, 0)
