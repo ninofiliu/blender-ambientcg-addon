@@ -1,7 +1,7 @@
 bl_info = {
     "name": "AmbientCG Material Importer",
     "author": "Nino Filiu",
-    "version": (1, 1, 1),
+    "version": (1, 1, 2),
     "blender": (4, 2, 0),
     "location": "Shader Editor > Sidebar > AmbientCG",
     "description": "One-click material creation from AmbientCG",
@@ -87,6 +87,14 @@ class MATERIAL_OT_fetch_and_create(bpy.types.Operator):
         principled = nodes.new(type="ShaderNodeBsdfPrincipled")
         principled.location = (0, 0)
         links.new(principled.outputs["BSDF"], material_output.inputs["Surface"])
+        
+        # Creating a Texture Coordinate Node and a Mapping Node
+        tex_coord = nodes.new(type="ShaderNodeTexCoord")
+        tex_coord.location = (-1000, 0)
+
+        mapping = nodes.new(type="ShaderNodeMapping")
+        mapping.location = (-800, 0)
+        links.new(tex_coord.outputs["UV"], mapping.inputs["Vector"])
 
         # Find and load texture files
         for file in os.listdir(extract_path):
@@ -96,6 +104,7 @@ class MATERIAL_OT_fetch_and_create(bpy.types.Operator):
                 color_tex.image = bpy.data.images.load(str(extract_path / file))
                 color_tex.image.colorspace_settings.name = "sRGB"
                 links.new(color_tex.outputs["Color"], principled.inputs["Base Color"])
+                links.new(mapping.outputs["Vector"], color_tex.inputs["Vector"])
             elif file.endswith("_Metalness.png"):
                 metalness_tex = nodes.new(type="ShaderNodeTexImage")
                 metalness_tex.location = (-600, 300)
@@ -104,6 +113,7 @@ class MATERIAL_OT_fetch_and_create(bpy.types.Operator):
                 links.new(
                     metalness_tex.outputs["Color"], principled.inputs["Metallic"]
                 )
+                links.new(mapping.outputs["Vector"], metalness_tex.inputs["Vector"])
             elif file.endswith("_Roughness.png"):
                 roughness_tex = nodes.new(type="ShaderNodeTexImage")
                 roughness_tex.location = (-600, 0)
@@ -112,6 +122,7 @@ class MATERIAL_OT_fetch_and_create(bpy.types.Operator):
                 links.new(
                     roughness_tex.outputs["Color"], principled.inputs["Roughness"]
                 )
+                links.new(mapping.outputs["Vector"], roughness_tex.inputs["Vector"])
             elif file.endswith("_NormalGL.png"):
                 normal_tex = nodes.new(type="ShaderNodeTexImage")
                 normal_tex.location = (-600, -300)
@@ -121,6 +132,7 @@ class MATERIAL_OT_fetch_and_create(bpy.types.Operator):
                 normal_map.location = (-300, -300)
                 links.new(normal_tex.outputs["Color"], normal_map.inputs["Color"])
                 links.new(normal_map.outputs["Normal"], principled.inputs["Normal"])
+                links.new(mapping.outputs["Vector"], normal_tex.inputs["Vector"])
             elif file.endswith("_Displacement.png"):
                 displacement_tex = nodes.new(type="ShaderNodeTexImage")
                 displacement_tex.location = (-600, -600)
@@ -135,6 +147,7 @@ class MATERIAL_OT_fetch_and_create(bpy.types.Operator):
                     displacement.outputs["Displacement"],
                     material_output.inputs["Displacement"],
                 )
+                links.new(mapping.outputs["Vector"], displacement_tex.inputs["Vector"])
 
         self.report(
             {"INFO"}, f"Material '{material_name}' has been created successfully."
