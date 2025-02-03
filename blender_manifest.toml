@@ -1,6 +1,6 @@
 schema_version = "1.0.0"
 id = "ambientcg_material_importer"
-version = "1.1.0"
+version = "1.1.1"
 name = "AmbientCG Material Importer"
 tagline = "One-click material creation from AmbientCG"
 maintainer = "Nino Filiu <filiunino@gmail.com>"
