@@ -1,8 +1,7 @@
 bl_info = {
     "name": "AmbientCG Material Importer",
     "author": "Nino Filiu",
-    "version": (1, 2, 0),
-
+    "version": (1, 4, 0),
     "blender": (4, 2, 0),
     "location": "Shader Editor > Sidebar > AmbientCG",
     "description": "One-click material creation from AmbientCG",
@@ -17,11 +16,26 @@ from bpy.props import StringProperty, EnumProperty
 from pathlib import Path
 
 
+class AmbientCGPreferences(bpy.types.AddonPreferences):
+    bl_idname = __name__
+
+    cache_dir: StringProperty(
+        name="Cache Folder",
+        subtype="DIR_PATH",
+        default=str(Path.home() / ".cache" / "ambientcg"),
+        description="Directory where AmbientCG texture PNGs will be stored",
+    )
+
+    def draw(self, context):
+        layout = self.layout
+        layout.prop(self, "cache_dir")
+
+
 def get_cache_dir():
-    home = Path.home()
-    cache_dir = home / ".cache" / "ambientcg"
-    cache_dir.mkdir(parents=True, exist_ok=True)
-    return cache_dir
+    prefs: AmbientCGPreferences = bpy.context.preferences.addons[__name__].preferences
+    dir_path = Path(prefs.cache_dir)
+    dir_path.mkdir(parents=True, exist_ok=True)
+    return dir_path
 
 
 class MATERIAL_OT_fetch_and_create(bpy.types.Operator):
@@ -88,7 +102,7 @@ class MATERIAL_OT_fetch_and_create(bpy.types.Operator):
         principled = nodes.new(type="ShaderNodeBsdfPrincipled")
         principled.location = (0, 0)
         links.new(principled.outputs["BSDF"], material_output.inputs["Surface"])
-        
+
         # Creating a Texture Coordinate Node and a Mapping Node
         tex_coord = nodes.new(type="ShaderNodeTexCoord")
         tex_coord.location = (-1000, 0)
@@ -111,9 +125,7 @@ class MATERIAL_OT_fetch_and_create(bpy.types.Operator):
                 metalness_tex.location = (-600, 300)
                 metalness_tex.image = bpy.data.images.load(str(extract_path / file))
                 metalness_tex.image.colorspace_settings.name = "Non-Color"
-                links.new(
-                    metalness_tex.outputs["Color"], principled.inputs["Metallic"]
-                )
+                links.new(metalness_tex.outputs["Color"], principled.inputs["Metallic"])
                 links.new(mapping.outputs["Vector"], metalness_tex.inputs["Vector"])
             elif file.endswith("_Roughness.png"):
                 roughness_tex = nodes.new(type="ShaderNodeTexImage")
@@ -173,6 +185,7 @@ class MATERIAL_PT_ambientcg_fetcher(bpy.types.Panel):
 
 
 classes = (
+    AmbientCGPreferences,
     MATERIAL_OT_fetch_and_create,
     MATERIAL_PT_ambientcg_fetcher,
 )
