@@ -32,7 +32,7 @@ Once the addon has been installed and enabled, there should be a new side tab in
 
 ![image](https://github.com/ninofiliu/blender-ambientcg-addon/assets/29477588/3e37f5e5-5f15-43af-89ca-753a95c86b17)
 
-Fill in the material name and the resolution. By default, it fills in [Rock035](https://ambientcg.com/view?id=Rock035), but you can chose any other material id. The material id is basically the displayed material name without space, as it appears in the URL.
+Fill in the material name and the resolution. By default, it fills in [Rock035](https://ambientcg.com/view?id=Rock035), but you can choose any other material ID. The material ID is basically the displayed material name without space, as it appears in the URL.
 
 ![image](https://github.com/ninofiliu/blender-ambientcg-addon/assets/29477588/413cced7-ee3a-4d19-a6b9-c91c9aa5d3a5)
 
