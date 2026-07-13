@@ -12,6 +12,7 @@ import bpy
 import os
 import urllib.request
 import zipfile
+import re
 from bpy.props import StringProperty, EnumProperty, FloatProperty
 from pathlib import Path
 
@@ -44,7 +45,11 @@ class MATERIAL_OT_fetch_and_create(bpy.types.Operator):
     bl_options = {"REGISTER", "UNDO"}
 
     def execute(self, context):
-        material_name = context.scene.ambientcg_material_name
+        input_val = context.scene.ambientcg_input_string
+
+        # Match URL or string for valid id, selects just the material name / id
+        # Also removes spaces to users can just copy the name on the webpage 
+        material_name = re.search(r"(?:id=)?([A-Za-z0-9]+)$", input_val.replace(" ", "")).group(1)
         resolution = context.scene.ambientcg_resolution
 
         url = f"https://ambientcg.com/get?file={material_name}_{resolution}-PNG.zip"
@@ -198,7 +203,7 @@ class MATERIAL_PT_ambientcg_fetcher(bpy.types.Panel):
         layout = self.layout
         scene = context.scene
 
-        layout.prop(scene, "ambientcg_material_name", text="Material Name")
+        layout.prop(scene, "ambientcg_input_string", text="Material Name")
         layout.prop(scene, "ambientcg_resolution", text="Resolution")
         layout.prop(scene, "ambientcg_projection", text="Projection")
 
@@ -219,9 +224,9 @@ classes = (
 def register():
     for cls in classes:
         bpy.utils.register_class(cls)
-    bpy.types.Scene.ambientcg_material_name = StringProperty(
+    bpy.types.Scene.ambientcg_input_string = StringProperty(
         name="Material Name",
-        description="Name of the AmbientCG material (e.g., Rock035)",
+        description="Name of the AmbientCG material (e.g., Rock035)\nOr URL like: https://ambientcg.com/view?id=Tiles141",
         default="Rock035",
     )
     bpy.types.Scene.ambientcg_resolution = EnumProperty(
@@ -257,7 +262,7 @@ def register():
 def unregister():
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)
-    del bpy.types.Scene.ambientcg_material_name
+    del bpy.types.Scene.ambientcg_input_string
     del bpy.types.Scene.ambientcg_resolution
     del bpy.types.Scene.ambientcg_projection
     del bpy.types.Scene.ambientcg_blend
